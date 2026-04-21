@@ -15,8 +15,8 @@ def send_telegram_message(message):
 
 # స్టాక్ పేరు మరియు మన టార్గెట్ ధరలు (మీకు కావాల్సినట్లు మార్చుకోవచ్చు)
 stock_symbol = "RELIANCE.NS"
-lower_target = 1355  # కిందకు వస్తే
-upper_target = 1368  # పైకి వెళితే
+lower_target = 1352  # కిందకు వస్తే
+upper_target = 1356  # పైకి వెళితే
 
 try:
     # ఈ రోజుటి లైవ్ ధరను (1 నిమిషం డేటా) తీసుకోవడం
