@@ -13,8 +13,13 @@ def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
     requests.post(url, data=payload)
-
-stocks_list =["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "SBIN.NS", "INFY.NS", "ICICIBANK.NS", "ITC.NS", "LT.NS"]
+# మనం స్కాన్ చేస్తున్న స్టాక్స్ జాబితా
+stocks_list =[
+    "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "SBIN.NS", "INFY.NS", 
+    "ICICIBANK.NS", "ITC.NS", "LT.NS", "TATAMOTORS.NS", "BAJFINANCE.NS", 
+    "HINDUNILVR.NS", "BHARTIARTL.NS", "MARUTI.NS", "SUNPHARMA.NS", 
+    "M&M.NS", "ASIANPAINT.NS", "TITAN.NS", "WIPRO.NS", "NTPC.NS", "KOTAKBANK.NS"
+]
 
 buy_signals = []
 sell_signals =[]
