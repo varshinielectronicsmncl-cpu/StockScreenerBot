@@ -1,29 +1,33 @@
-name: Market Scanner Bot
+import os
+import requests
 
-on:
-  schedule:
-    # మార్కెట్ టైమ్స్: సోమ-శుక్ర (ఉదయం 9:30 - మధ్యాహ్నం 3:30 IST)
-    # GitHub టైమ్ UTC లో ఉంటుంది, కాబట్టి దానికి తగ్గట్టు మార్చబడింది.
-    - cron: '*/15 4-10 * * 1-5'
-  workflow_dispatch: # మనం కావాలనుకున్నప్పుడు మ్యాన్యువల్ గా కూడా రన్ చేసుకోవడానికి
+# GitHub Secrets నుండి మీ టోకెన్స్
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
-jobs:
-  run-bot:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+def send_test_message():
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": "🟢 *TESTING SUCCESS!* \n\nనమస్కారం! మీ టెలిగ్రామ్ బాట్ పర్ఫెక్ట్‌గా పనిచేస్తోంది. కనెక్షన్ సక్సెస్! 🎉",
+        "parse_mode": "Markdown"
+    }
+    
+    try:
+        # మెసేజ్ పంపుతున్నాం
+        response = requests.post(url, data=payload)
+        
+        # రిజల్ట్ ప్రింట్ చేస్తున్నాం (గిట్‌హబ్‌లో చూడటానికి)
+        print("Status Code:", response.status_code)
+        print("Response:", response.text)
+        
+        if response.status_code == 200:
+            print("✅ టెలిగ్రామ్‌కి మెసేజ్ విజయవంతంగా పంపబడింది!")
+        else:
+            print("❌ ఎర్రర్: మెసేజ్ వెళ్ళలేదు. మీ BOT_TOKEN లేదా CHAT_ID తప్పుగా ఉండి ఉండొచ్చు.")
+            
+    except Exception as e:
+        print("Error:", e)
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-
-      - name: Install Dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run Market Scanner
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python bot.py
+# ఫంక్షన్ రన్ చేయడం
+send_test_message()
