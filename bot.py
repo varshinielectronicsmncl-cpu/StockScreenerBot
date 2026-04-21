@@ -1,11 +1,10 @@
 import os
 import yfinance as yf
-import pandas_ta as ta
 import requests
 import warnings
 warnings.filterwarnings('ignore') 
 
-# GitHub Secrets నుండి టోకెన్స్ తీసుకుంటుంది (ఇతరులకు కనిపించవు)
+# GitHub Secrets నుండి టోకెన్స్ తీసుకుంటుంది
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
@@ -13,42 +12,36 @@ def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
     requests.post(url, data=payload)
-# మనం స్కాన్ చేస్తున్న స్టాక్స్ జాబితా
-stocks_list =[
-    "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "SBIN.NS", "INFY.NS", 
-    "ICICIBANK.NS", "ITC.NS", "LT.NS", "TATAMOTORS.NS", "BAJFINANCE.NS", 
-    "HINDUNILVR.NS", "BHARTIARTL.NS", "MARUTI.NS", "SUNPHARMA.NS", 
-    "M&M.NS", "ASIANPAINT.NS", "TITAN.NS", "WIPRO.NS", "NTPC.NS", "KOTAKBANK.NS"
-]
 
-buy_signals = []
-sell_signals =[]
+# స్టాక్ పేరు మరియు మన టార్గెట్ ధరలు (మీకు కావాల్సినట్లు మార్చుకోవచ్చు)
+stock_symbol = "RELIANCE.NS"
+lower_target = 1360  # కిందకు వస్తే
+upper_target = 1370  # పైకి వెళితే
 
-for stock in stocks_list:
-    try:
-        df = yf.download(stock, period="1mo", interval="1d", progress=False)
-        if df.empty: continue
+try:
+    # ఈ రోజుటి లైవ్ ధరను (1 నిమిషం డేటా) తీసుకోవడం
+    df = yf.download(stock_symbol, period="1d", interval="1m", progress=False)
+    
+    # డేటా ఉందో లేదో చెక్ చేయడం
+    if not df.empty:
+        current_price = df['Close'].iloc[-1]
+        print(f"{stock_symbol} ప్రస్తుత ధర: ₹{current_price:.2f}")
+
+        # 1. ధర కిందకు పడిపోతే (Down Alert)
+        if current_price <= lower_target:
+            msg = f"📉 *PRICE DROP ALERT!*\n\n{stock_symbol} ధర కిందకు పడిపోయింది.\nప్రస్తుత ధర: *₹{current_price:.2f}*\nమీ టార్గెట్: ₹{lower_target}"
+            send_telegram_message(msg)
+            print("కింది స్థాయి అలర్ట్ పంపబడింది.")
             
-        df['RSI'] = ta.rsi(df['Close'], length=14)
-        df['Prev_High'] = df['High'].shift(1)
-        df['Prev_Low'] = df['Low'].shift(1)
-        
-        latest = df.iloc[-1]
-        current_close = latest['Close']
-        prev_high = latest['Prev_High']
-        prev_low = latest['Prev_Low']
-        current_rsi = latest['RSI']
-        
-        if current_close > prev_high and current_rsi > 50:
-            buy_signals.append(f"🟢 *BUY*: {stock.replace('.NS', '')} | Price: ₹{current_close:.2f} | RSI: {current_rsi:.2f}")
+        # 2. ధర పైకి పెరిగితే (Up Alert)
+        elif current_price >= upper_target:
+            msg = f"🚀 *PRICE UP ALERT!*\n\n{stock_symbol} ధర పైకి పెరిగింది.\nప్రస్తుత ధర: *₹{current_price:.2f}*\nమీ టార్గెట్: ₹{upper_target}"
+            send_telegram_message(msg)
+            print("పై స్థాయి అలర్ట్ పంపబడింది.")
             
-        elif current_close < prev_low and current_rsi < 40:
-            sell_signals.append(f"🔴 *SELL*: {stock.replace('.NS', '')} | Price: ₹{current_close:.2f} | RSI: {current_rsi:.2f}")
-    except:
-        pass
+        # 3. టార్గెట్ మధ్యలో ఉంటే
+        else:
+            print(f"ధర {lower_target} మరియు {upper_target} మధ్యలో ఉంది. కాబట్టి మెసేజ్ పంపలేదు.")
 
-if buy_signals or sell_signals:
-    final_message = "📊 *మార్కెట్ అలర్ట్:*\n\n"
-    if buy_signals: final_message += "*BUY సిగ్నల్స్:*\n" + "\n".join(buy_signals) + "\n\n"
-    if sell_signals: final_message += "*SELL సిగ్నల్స్:*\n" + "\n".join(sell_signals)
-    send_telegram_message(final_message)
+except Exception as e:
+    print(f"ఎర్రర్: {e}")
